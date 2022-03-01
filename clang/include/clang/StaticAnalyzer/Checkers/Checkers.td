@@ -229,6 +229,17 @@ def NonnullGlobalConstantsChecker: Checker<"NonnilStringConstants">,
   HelpText<"Assume that const string-like globals are non-null">,
   Documentation<NotDocumented>,
   Hidden;
+  
+def TestChecker : Checker<"Test">,
+  HelpText<"Test checker">,
+  Documentation<NotDocumented>,
+  CheckerOptions<[
+    CmdLineOption<Integer,
+                  "PassedValue",
+                  "Value to be parsed from source and passed here.",
+                  "50",
+                  Released>
+  ]>;
 
 } // end "core"
 
@@ -297,6 +308,17 @@ def C11LockChecker : Checker<"C11Lock">,
   HelpText<"Simple lock -> unlock checker">,
   Dependencies<[PthreadLockBase]>,
   Documentation<HasAlphaDocumentation>;
+
+def ConvertDescriptionChecker : Checker<"ConvertDescription">,
+  HelpText<"Function description converter">,
+  Documentation<NotDocumented>,
+  CheckerOptions<[
+    CmdLineOption<String,
+                  "OutputDir",
+                  "Specifies the directory where the config files will be placed.",
+                  "",
+                  InAlpha>,
+  ]>;
 
 } // end "alpha.core"
 
