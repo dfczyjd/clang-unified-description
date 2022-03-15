@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_CONVERTDESCRIPTIONCHECKER_H
+#define LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_CONVERTDESCRIPTIONCHECKER_H
+
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "DescriptionConverter.h"
 #include "RegisterConverters.h"
@@ -22,3 +24,5 @@ public:
   llvm::StringRef ConfigDirectory;
 };
 } // namespace
+
+#endif // LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_CONVERTDESCRIPTIONCHECKER_H

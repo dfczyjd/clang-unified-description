@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_CONVERTDESCRIPTIONVISITOR_H
+#define LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_CONVERTDESCRIPTIONVISITOR_H
+
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/AST/StmtVisitor.h"
 #include "DescriptionConverter.h"
@@ -25,3 +27,5 @@ public:
   void GenerateError(const char *converter, const char *message,
                      SourceLocation *location = nullptr) const;
 };
+
+#endif // LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_CONVERTDESCRIPTIONVISITOR_H

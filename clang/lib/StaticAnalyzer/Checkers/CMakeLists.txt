@@ -38,7 +38,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   DescriptionConverter/ConvertDescriptionChecker.cpp
   DescriptionConverter/DescriptionConverter.cpp
   DescriptionConverter/RegisterConverters.cpp
-  DescriptionConverter/DescriptionConverter/TaintCheckerDescriptionConverter.cpp
+  DescriptionConverter/DescriptionConverters/TaintCheckerDescriptionConverter.cpp
   DirectIvarAssignment.cpp
   DivZeroChecker.cpp
   DynamicTypePropagation.cpp

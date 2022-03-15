@@ -1,5 +1,7 @@
-#pragma once
-#include "DescriptionConverter.h"
+#ifndef LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_TAINTCHECKERCONVERTER_H
+#define LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_TAINTCHECKERCONVERTER_H
+
+#include "../DescriptionConverter.h"
 #include "llvm/Support/YAMLTraits.h"
 
 using namespace clang;
@@ -94,3 +96,5 @@ private:
 
   const llvm::StringRef CONFIG_FILE = "config.yaml";
 };
+
+#endif // LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_TAINTCHECKERCONVERTER_H

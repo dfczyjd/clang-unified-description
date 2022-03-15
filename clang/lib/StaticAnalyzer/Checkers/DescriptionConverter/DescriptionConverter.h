@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_DESCRIPTIONCONVERTER_H
+#define LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_DESCRIPTIONCONVERTER_H
+
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 class DescriptionConverter;
@@ -26,3 +28,5 @@ protected:
   void GenerateError(const char *converter, const char *message,
                      clang::SourceLocation *location) const;
 };
+
+#endif // LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_DESCRIPTIONCONVERTER_H

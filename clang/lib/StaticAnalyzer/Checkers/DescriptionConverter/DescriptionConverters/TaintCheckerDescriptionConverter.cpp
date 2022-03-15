@@ -1,4 +1,4 @@
-#include "DescriptionConverter.h"
+#include "../DescriptionConverter.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "TaintCheckerDescriptionConverter.h"
 #include "llvm/Support/FormatVariadic.h"
