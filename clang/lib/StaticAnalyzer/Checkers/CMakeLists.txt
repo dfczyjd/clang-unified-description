@@ -35,6 +35,9 @@ add_clang_library(clangStaticAnalyzerCheckers
   DebugIteratorModeling.cpp
   DeleteWithNonVirtualDtorChecker.cpp
   DereferenceChecker.cpp
+  DescriptionManager/DescriptionManager.cpp
+  DescriptionManager/DescriptionUtils.cpp
+  DescriptionManager/SFunctionVisitor.cpp
   DirectIvarAssignment.cpp
   DivZeroChecker.cpp
   DynamicTypePropagation.cpp
