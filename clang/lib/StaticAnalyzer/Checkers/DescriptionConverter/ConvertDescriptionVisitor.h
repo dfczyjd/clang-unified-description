@@ -25,7 +25,7 @@ public:
   void VisitCallExpr(const CallExpr *ce);
   void VisitStmt(const Stmt *S);
   void GenerateError(const char *converter, const char *message,
-                     SourceLocation *location = nullptr) const;
+                     llvm::Optional<SourceLocation> location) const;
 };
 
 #endif // LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_CONVERTDESCRIPTIONVISITOR_H

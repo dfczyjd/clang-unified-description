@@ -93,6 +93,8 @@ public:
 private:
   ArgVector ConvertArgList(const FunctionDecl *currentFunction,
                            const CallExpr *ce);
+  void SetNameAndScope(TaintConfiguration::Propagation &propagation,
+                       const clang::FunctionDecl *function);
 
   const llvm::StringRef CONFIG_FILE = "config.yaml";
 };

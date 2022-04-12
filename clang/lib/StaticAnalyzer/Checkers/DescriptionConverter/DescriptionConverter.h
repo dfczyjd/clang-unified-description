@@ -26,7 +26,7 @@ protected:
   const clang::DeclRefExpr* UnwrapVariable(const clang::Expr *e) const;
 
   void GenerateError(const char *converter, const char *message,
-                     clang::SourceLocation *location) const;
+                     llvm::Optional<clang::SourceLocation> location) const;
 };
 
 #endif // LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_DESCRIPTIONCONVERTER_H

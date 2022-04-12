@@ -21,6 +21,6 @@ DescriptionConverter::UnwrapVariable(const clang::Expr *e) const {
 
 void DescriptionConverter::GenerateError(const char *converter,
                                          const char *message,
-                                         clang::SourceLocation *location) const {
+                                         llvm::Optional<clang::SourceLocation> location) const {
   walker->GenerateError(converter, message, location);
 }

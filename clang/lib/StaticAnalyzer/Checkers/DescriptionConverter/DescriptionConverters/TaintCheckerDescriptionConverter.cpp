@@ -15,17 +15,32 @@ ArgVector TaintCheckerDescriptionConverter::ConvertArgList(const FunctionDecl *c
                                    currentFunction->getName())
                          .str();
         auto argLocation = (*it)->getExprLoc();
-        GenerateError("TaintCheckerConverter", error.c_str(), &argLocation);
+        GenerateError("TaintCheckerConverter", error.c_str(), argLocation);
       } else {
         args.push_back(argIndex);
       }
     } else {
       auto argLocation = (*it)->getExprLoc();
       GenerateError("TaintCheckerConverter", "Expected a variable here",
-                    &argLocation);
+                    argLocation);
     }
   }
   return args;
+}
+
+void TaintCheckerDescriptionConverter::SetNameAndScope(
+    TaintConfiguration::Propagation &propagation,
+    const clang::FunctionDecl *function) {
+  auto fullName = function->getQualifiedNameAsString();
+  auto scopeAndName = llvm::StringRef(fullName).rsplit("::");
+  if (scopeAndName.second.empty()) {
+    // There were no scope, so rsplit returned single piece as scope
+    propagation.Scope = "";
+    propagation.Name = scopeAndName.first.str();
+  } else {
+    propagation.Scope = scopeAndName.first.str();
+    propagation.Name = scopeAndName.second.str();
+  }
 }
 
 void TaintCheckerDescriptionConverter::ProcessFunction(
@@ -41,7 +56,7 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       }
     }
     TaintConfiguration::Propagation prop;
-    prop.Name = currentFunc->getName().str();
+    SetNameAndScope(prop, currentFunc);
     prop.SrcArgs = srcArgs;
     prop.VarType = VariadicType::None;
     prop.VarIndex = InvalidArgIndex;
@@ -58,7 +73,7 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       }
     }
     TaintConfiguration::Propagation prop;
-    prop.Name = currentFunc->getName().str();
+    SetNameAndScope(prop, currentFunc);
     prop.DstArgs = dstArgs;
     prop.VarType = VariadicType::None;
     prop.VarIndex = InvalidArgIndex;
@@ -72,10 +87,74 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       }
     }
     TaintConfiguration::Propagation prop;
-    prop.Name = currentFunc->getName().str();
+    SetNameAndScope(prop, currentFunc);
     prop.DstArgs = {-1};
     prop.VarType = VariadicType::None;
     prop.VarIndex = InvalidArgIndex;
+    Config.Propagations.push_back(prop);
+  } else if (function->getName() == "sf_propagation_variadic") {
+    auto currentFunc = ADC->getDecl()->getAsFunction();
+    if (!currentFunc->isVariadic()) {
+      GenerateError(
+          "TaintCheckerConverter",
+          "This special function should be used only in variadic functions",
+          ce->getExprLoc());
+    }
+    if (ce->getNumArgs() != 2) {
+      GenerateError(
+          "TaintCheckerConverter",
+          "This function should have exactly 2 arguments",
+          ce->getExprLoc());
+      return;
+    }
+    VariadicType varType = VariadicType::None;
+    unsigned varIndex = InvalidArgIndex;
+    if (auto typeArg = dyn_cast<DeclRefExpr>(ce->getArg(0)->IgnoreImpCasts()))  {
+      if (auto value = dyn_cast<EnumConstantDecl>(typeArg->getDecl())) {
+        varType = VariadicType(value->getInitVal().getZExtValue());
+      } else {
+        GenerateError("TaintCheckerConverter", "Enum expected here",
+                      typeArg->getExprLoc());
+        return;
+      }
+    } else {
+      GenerateError("TaintCheckerConverter", "Enum expected here",
+                    ce->getArg(0)->getExprLoc());
+      return;
+    }
+    if (auto indexArg =
+            dyn_cast<IntegerLiteral>(ce->getArg(1)->IgnoreImpCasts())) {
+      auto value = indexArg->getValue().getZExtValue();
+      if (value < std::numeric_limits<unsigned>::lowest() ||
+          value > std::numeric_limits<unsigned>::max()) {
+        GenerateError(
+            "TaintCheckerConverter",
+            llvm::formatv("The value should be within range [{0}, {1}]",
+                          std::numeric_limits<unsigned>::lowest(),
+                          std::numeric_limits<unsigned>::max())
+                .str()
+                .c_str(),
+            ce->getArg(1)->getExprLoc());
+        return;
+      }
+      varIndex = (unsigned)value;
+    } else {
+      GenerateError("TaintCheckerConverter", "Integer expected here",
+                    ce->getArg(1)->getExprLoc());
+      return;
+    }
+
+    for (auto &prop : Config.Propagations) {
+      if (prop.Name == currentFunc->getName()) {
+        prop.VarType = varType;
+        prop.VarIndex = varIndex;
+        return;
+      }
+    }
+    TaintConfiguration::Propagation prop;
+    SetNameAndScope(prop, currentFunc);
+    prop.VarType = varType;
+    prop.VarIndex = varIndex;
     Config.Propagations.push_back(prop);
   } else if (function->getName() == "sf_sink") {
     auto currentFunc = ADC->getDecl()->getAsFunction();

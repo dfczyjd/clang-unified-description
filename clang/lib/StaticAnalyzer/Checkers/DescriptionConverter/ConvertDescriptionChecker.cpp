@@ -12,14 +12,14 @@ using namespace clang::ento;
 
 // Generate error node at current location
 void ConvertDescriptionVisitor::GenerateError(const char *converter,
-                                         const char *message, SourceLocation *location) const {
+                                         const char *message, llvm::Optional<SourceLocation> location) const {
   PathDiagnosticLocation pdl;
-  if (location == nullptr)
-    // No location known, use the one of the context
-    pdl = PathDiagnosticLocation(ADC->getDecl(),
+  if (location.hasValue())
+    pdl = PathDiagnosticLocation(*location,
                                  ADC->getASTContext().getSourceManager());
   else
-    pdl = PathDiagnosticLocation(*location,
+    // No location known, use the one of the context
+    pdl = PathDiagnosticLocation(ADC->getDecl(),
                                  ADC->getASTContext().getSourceManager());
   BR.EmitBasicReport(ADC->getDecl(), C->getCheckerName(), converter, converter,
                      message, pdl);
