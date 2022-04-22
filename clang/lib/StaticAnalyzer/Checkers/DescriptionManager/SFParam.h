@@ -18,81 +18,81 @@ public:
 private:
   ParamKind Kind;
 
+  const clang::Expr *Expression;
+
 public:
-  SFParam() : Kind(PK_None) {}
-  SFParam(ParamKind kind) : Kind(kind) {}
-  virtual clang::SourceLocation GetItemLocation() const = 0;
+  SFParam(const clang::Expr* E = nullptr) : Kind(PK_None), Expression(E) {}
+  SFParam(ParamKind kind) : Kind(kind), Expression(nullptr) {}
+  virtual clang::SourceLocation GetItemLocation() const {
+    return Expression->getExprLoc();
+  }
 
+  virtual const clang::Expr *GetExpr() const { return Expression; }
+
+  static bool classof(const SFParam *P) { return P->getKind() == PK_None; }
   virtual ~SFParam() = default;
-
   ParamKind getKind() const { return Kind; }
 };
 
 class VariableParam : public SFParam {
 public:
   VariableParam(const clang::DeclRefExpr *DE)
-      : SFParam(PK_Variable), Declaration(DE) {}
+      : SFParam(PK_Variable), Expression(DE) {}
 
-  llvm::StringRef GetName() const { return Declaration->getDecl()->getName(); }
+  llvm::StringRef GetName() const { return Expression->getDecl()->getName(); }
+  const clang::DeclRefExpr *GetExpr() const override { return Expression; }
   clang::SourceLocation GetItemLocation() const override {
-    return Declaration->getExprLoc();
+    return Expression->getExprLoc();
   }
 
   static bool classof(const SFParam *P) { return P->getKind() == PK_Variable; }
 
 private:
-  const clang::DeclRefExpr *Declaration;
+  const clang::DeclRefExpr *Expression;
 };
 
 class IntegerParam : public SFParam {
 public:
   IntegerParam(const clang::IntegerLiteral *L)
-      : SFParam(PK_Integer), Literal(L) {}
+      : SFParam(PK_Integer), Expression(L) {}
 
-  llvm::APInt GetValue() const { return Literal->getValue(); }
-  clang::SourceLocation GetItemLocation() const override {
-    return Literal->getExprLoc();
-  }
+  llvm::APInt GetValue() const { return Expression->getValue(); }
+  const clang::IntegerLiteral *GetExpr() const override { return Expression; }
 
   static bool classof(const SFParam *P) { return P->getKind() == PK_Integer; }
 
 private:
-  const clang::IntegerLiteral *Literal;
+  const clang::IntegerLiteral *Expression;
 };
 
 class StringParam : public SFParam {
 public:
-  StringParam(const clang::StringLiteral *L) : SFParam(PK_String), Literal(L) {}
+  StringParam(const clang::StringLiteral *L)
+      : SFParam(PK_String), Expression(L) {}
   
-  llvm::StringRef GetValue() const { return Literal->getString(); }
-  clang::SourceLocation GetItemLocation() const override {
-    return Literal->getExprLoc();
-  }
+  llvm::StringRef GetValue() const { return Expression->getString(); }
 
   static bool classof(const SFParam *P) { return P->getKind() == PK_String; }
 
 private:
-  const clang::StringLiteral *Literal;
+  const clang::StringLiteral *Expression;
 };
 
 class EnumParam : public SFParam {
 public:
   EnumParam(const clang::DeclRefExpr *DE)
-      : SFParam(PK_Enum), Declaration(DE),
+      : SFParam(PK_Enum), Expression(DE),
         Value(llvm::dyn_cast<clang::EnumConstantDecl>(DE->getDecl())) {}
 
   llvm::APInt GetValue() const {
     return Value->getInitVal();
-  }
-  clang::SourceLocation GetItemLocation() const override {
-    return Declaration->getExprLoc();
   }
   bool isCorrect() const { return Value != nullptr; }
 
   static bool classof(const SFParam *P) { return P->getKind() == PK_Enum; }
 
 private:
-  const clang::DeclRefExpr *Declaration;
+  const clang::DeclRefExpr *Expression;
   const clang::EnumConstantDecl *Value;
 };
 

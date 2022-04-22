@@ -19,6 +19,29 @@ int DescriptionUtils::LookForArgument(const clang::FunctionDecl *function,
   return -1;
 }
 
+void DescriptionUtils::EmitBugReport(BugReporter &BR, AnalysisDeclContext *ADC,
+                                     CheckerNameRef checkerName,
+                                     SourceLocation callWithIssue,
+                                     llvm::StringRef bugStr) {
+  auto pdl = PathDiagnosticLocation(callWithIssue,
+                                    ADC->getASTContext().getSourceManager());
+  BR.EmitBasicReport(ADC->getDecl(), checkerName, "Incorrect SF Call",
+                     "Incorrect Configuration", bugStr, pdl);
+}
+
+void DescriptionUtils::EmitBugReport(BugReporter &BR, AnalysisDeclContext *ADC,
+                                     CheckerNameRef checkerName,
+                                     SFParam *paramWithIssue,
+                                     llvm::StringRef bugStr) {
+  auto pdl = PathDiagnosticLocation(paramWithIssue->GetItemLocation(),
+                                    ADC->getASTContext().getSourceManager());
+  BR.EmitBasicReport(ADC->getDecl(), checkerName,
+                     "Incorrect SF Parameter",
+                     "Incorrect Configuration",
+                     bugStr,
+                     pdl);
+}
+
 SmallVector<unsigned> DescriptionUtils::FindParameters(
     BugReporter &BR, AnalysisDeclContext *currentADC,
     const FunctionDecl *currentFunction, ParamVector params,
@@ -27,27 +50,16 @@ SmallVector<unsigned> DescriptionUtils::FindParameters(
   for (auto elem : params) {
     if (auto param = dyn_cast<VariableParam>(&*elem)) {
       int argIndex = LookForArgument(currentFunction, param->GetName());
-      if (argIndex == -1) {
-        auto pdl = PathDiagnosticLocation(
-            param->GetItemLocation(),
-            currentADC->getASTContext().getSourceManager());
-        BR.EmitBasicReport(
-            currentADC->getDecl(), checkerName,
-            "Incorrect Configuration Parameter", "Incorrect Configuration",
-            llvm::formatv("{0} is not an argument of {1}", param->GetName(),
-                          currentFunction->getName())
-                .str(),
-            pdl);
-      } else
+      if (argIndex == -1)
+        EmitBugReport(BR, currentADC, checkerName, param,
+                      llvm::formatv("{0} is not an argument of {1}",
+                                    param->GetName(),
+                                    currentFunction->getName()).str());
+      else
         args.push_back(argIndex);
-    } else {
-      auto pdl = PathDiagnosticLocation(
-          elem->GetItemLocation(),
-          currentADC->getASTContext().getSourceManager());
-      BR.EmitBasicReport(currentADC->getDecl(), checkerName,
-          "Incorrect Configuration Parameter", "Incorrect Configuration",
-          "Expected a variable here", pdl);
-    }
+    } else
+      EmitBugReport(BR, currentADC, checkerName, elem,
+                    "Expected a variable here");
   }
   return args;
 }

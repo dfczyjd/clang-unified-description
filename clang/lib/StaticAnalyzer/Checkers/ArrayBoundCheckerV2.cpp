@@ -21,16 +21,18 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/DynamicExtent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
+#include "DescriptionManager/DescriptionManager.h"
+#include "DescriptionManager/DescriptionUtils.h"
 
 using namespace clang;
 using namespace ento;
 using namespace taint;
 
 namespace {
-class ArrayBoundCheckerV2 :
-    public Checker<check::Location> {
+class ArrayBoundCheckerV2 : public Checker<check::Location, check::PostCall> {
   mutable std::unique_ptr<BuiltinBug> BT;
 
   enum OOB_Kind { OOB_Precedes, OOB_Excedes, OOB_Tainted };
@@ -41,6 +43,7 @@ class ArrayBoundCheckerV2 :
 public:
   void checkLocation(SVal l, bool isLoad, const Stmt*S,
                      CheckerContext &C) const;
+  void checkPostCall(const CallEvent &Call, CheckerContext &Ctx) const;
 };
 
 // FIXME: Eventually replace RegionRawOffset with this class.
@@ -111,6 +114,71 @@ getSimplifiedOffsets(NonLoc offset, nonloc::ConcreteInt extent,
   }
 
   return std::pair<NonLoc, nonloc::ConcreteInt>(offset, extent);
+}
+
+void registerSFs() {
+  DescriptionManager mgr;
+  mgr.AddSFunction("sf_buffer_size");
+}
+
+void ArrayBoundCheckerV2::checkPostCall(const CallEvent &Call,
+                                        CheckerContext &Ctx) const {
+  DescriptionManager mgr;
+  DescriptionUtils utils;
+  auto function = Call.getDecl()->getAsFunction();
+  SFunctionVisitor walker(Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
+                          this);
+  mgr.SetWalker(&walker);
+
+  for (auto call : mgr.GetParams("sf_buffer_size", function)) {
+    if (call.size() != 2) {
+      utils.EmitBugReport(Ctx.getBugReporter(),
+                          Ctx.getCurrentAnalysisDeclContext(), getCheckerName(),
+                          call.GetCallLocation(), "This function should have exactly 2 arguments");
+      continue;
+    }
+    if (auto var_arg = dyn_cast<VariableParam>(call[0])) {
+      auto var = var_arg->GetExpr();
+      if (!var->getType()->isPointerType()) {
+        utils.EmitBugReport(
+            Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
+            getCheckerName(), var_arg, "Expected a pointer here");
+        continue;
+      }
+      
+      if (call[1]->GetExpr()->getType().getTypePtr()->isIntegerType()) {
+        if (auto CE = dyn_cast<CallExpr>(Call.getOriginExpr())) {
+          auto State = Call.getState();
+          const LocationContext *LCtx =
+              Ctx.getPredecessor()->getLocationContext();
+          SValBuilder &svalBuilder = Ctx.getSValBuilder();
+          auto functionParams = function->parameters();
+          unsigned Count = Ctx.blockCount();
+          SVal Size = State->getSVal(call[1]->GetExpr(), LCtx);
+          DefinedSVal arrayWithSize =
+              svalBuilder.getConjuredHeapSymbolVal(CE, LCtx, Count)
+                  .castAs<DefinedSVal>();
+
+          State = State->BindExpr(CE, Ctx.getLocationContext(), arrayWithSize);
+
+          State = setDynamicExtent(State, arrayWithSize.getAsRegion(),
+                                   Size.castAs<DefinedOrUnknownSVal>(),
+                                   svalBuilder);
+          Ctx.addTransition(State);
+        }
+      } else {
+        utils.EmitBugReport(
+            Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
+            getCheckerName(), call[1], "Expected an expression of integer type here");
+        continue;
+      }
+    } else {
+      utils.EmitBugReport(Ctx.getBugReporter(),
+                          Ctx.getCurrentAnalysisDeclContext(), getCheckerName(),
+                          var_arg, "Expected a variable here");
+      continue;
+    }
+  }
 }
 
 void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
@@ -354,6 +422,7 @@ RegionRawOffsetV2 RegionRawOffsetV2::computeOffset(ProgramStateRef state,
 
 void ento::registerArrayBoundCheckerV2(CheckerManager &mgr) {
   mgr.registerChecker<ArrayBoundCheckerV2>();
+  registerSFs();
 }
 
 bool ento::shouldRegisterArrayBoundCheckerV2(const CheckerManager &mgr) {

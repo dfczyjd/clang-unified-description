@@ -22,6 +22,15 @@ public:
                          const clang::FunctionDecl *function);
   static void MarkAsParsedBy(const CheckerBase *C,
                              const clang::FunctionDecl *function);
+  static void EmitBugReport(clang::ento::BugReporter &BR,
+                            clang::AnalysisDeclContext *ADC,
+                            clang::ento::CheckerNameRef checkerName,
+                            SFParam *paramWithIssue, llvm::StringRef bugStr);
+  static void EmitBugReport(clang::ento::BugReporter &BR,
+                            clang::AnalysisDeclContext *ADC,
+                            clang::ento::CheckerNameRef checkerName,
+                            clang::SourceLocation callWithIssue,
+                            llvm::StringRef bugStr);
 
 private:
   static std::set<std::pair<const CheckerBase *, const FunctionDecl *>>

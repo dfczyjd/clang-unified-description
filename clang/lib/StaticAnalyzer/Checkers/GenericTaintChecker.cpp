@@ -297,7 +297,6 @@ private:
                            CheckerContext &C);
   };
 
-  // TODO: нехорошо, но пока сойдёт
   /// Defines a map between the propagation function's name, scope
   /// and TaintPropagationRule.
   mutable NameRuleMap CustomPropagations;
@@ -629,24 +628,14 @@ void GenericTaintChecker::parseFunctionConfig(
     }
     for (auto params :
          mgr.GetParams("sf_propagation_variadic", currentFunction)) {
-      if (!currentFunction->isVariadic()) {
-        auto pdl = PathDiagnosticLocation(
-            params.GetCallLocation(),
-            currentADC->getASTContext().getSourceManager());
-        bugReporter.EmitBasicReport(
-            currentADC->getDecl(), getCheckerName(),
-            "Incorrect Special Function Usage",
-            "Incorrect Configuration",
-            "This special function should be used only in variadic functions", pdl);
-      }
+      if (!currentFunction->isVariadic())
+        utils.EmitBugReport(
+            bugReporter, currentADC, getCheckerName(), params.GetCallLocation(),
+            "This special function should be used only in variadic functions");
       if (params.size() != 2) {
-        auto pdl = PathDiagnosticLocation(
-            params.GetCallLocation(),
-            currentADC->getASTContext().getSourceManager());
-        bugReporter.EmitBasicReport(currentADC->getDecl(), getCheckerName(),
-                                    "Incorrect Configuration Parameter Count",
-                                    "Incorrect Configuration",
-                                    "This function should have exactly 2 arguments", pdl);
+        utils.EmitBugReport(bugReporter, currentADC, getCheckerName(),
+                            params.GetCallLocation(),
+                            "This function should have exactly 2 arguments");
         continue;
       }
       auto &rule = getOrEmplaceCustomPropagation(functionName.str(),
@@ -657,39 +646,27 @@ void GenericTaintChecker::parseFunctionConfig(
         auto value = typeArg->GetValue().getZExtValue();
         varType = VariadicType(value);
       } else {
-        auto pdl = PathDiagnosticLocation(
-            params[0]->GetItemLocation(),
-            currentADC->getASTContext().getSourceManager());
-        bugReporter.EmitBasicReport(currentADC->getDecl(), getCheckerName(),
-                                    "Incorrect Configuration Parameter Type",
-                                    "Incorrect Configuration",
-                                    "Enum expected here", pdl);
+        utils.EmitBugReport(bugReporter, currentADC, getCheckerName(),
+                            params[0],
+                            "Expected a SF_TaintCheckerVarType enum here");
         continue;
       }
       if (auto indexArg = dyn_cast<IntegerParam>(params[1])) {
         auto value = indexArg->GetValue().getZExtValue();
         if (value < std::numeric_limits<unsigned>::lowest() ||
             value > std::numeric_limits<unsigned>::max()) {
-          auto pdl = PathDiagnosticLocation(
-              indexArg->GetItemLocation(),
-              currentADC->getASTContext().getSourceManager());
-          bugReporter.EmitBasicReport(
-              currentADC->getDecl(), getCheckerName(),
-              "Incorrect Configuration Parameter", "Incorrect Configuration",
+          utils.EmitBugReport(
+              bugReporter, currentADC, getCheckerName(), params[0],
               llvm::formatv("The value should be within range [{0}, {1}]",
                             std::numeric_limits<unsigned>::lowest(),
-                            std::numeric_limits<unsigned>::max()).str(),
-              pdl);
+                            std::numeric_limits<unsigned>::max())
+                  .str());
         }
         varIndex = (unsigned)(value);
       } else {
-        auto pdl = PathDiagnosticLocation(
-            params[1]->GetItemLocation(),
-            currentADC->getASTContext().getSourceManager());
-        bugReporter.EmitBasicReport(currentADC->getDecl(), getCheckerName(),
-                                    "Incorrect Configuration Parameter Type",
-                                    "Incorrect Configuration",
-                                    "Integer expected here", pdl);
+        utils.EmitBugReport(bugReporter, currentADC, getCheckerName(),
+                            params[0],
+                            "Expected an integer here");
         continue;
       }
       rule.VarType = varType;

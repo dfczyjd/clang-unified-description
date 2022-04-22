@@ -22,8 +22,6 @@ public:
                             const CheckerBase *C)
       : BR(BR), ADC(ADC), C(C) {}
 
-  ~SFunctionVisitor();
-
   void VisitCallExpr(const CallExpr *ce);
   void VisitStmt(const Stmt *S);
   const llvm::StringMap<llvm::SmallVector<ParamVector>> &GetFoundSFs() {
