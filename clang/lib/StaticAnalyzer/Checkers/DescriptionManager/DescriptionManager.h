@@ -4,7 +4,7 @@
 #include "SFunctionVisitor.h"
 #include "llvm/ADT/StringSet.h"
 
-static class DescriptionManager {
+class DescriptionManager {
 
 public:
   static void AddSFunction(llvm::StringRef SFName) {
@@ -26,10 +26,7 @@ public:
     return RegisteredFunctions;
   }
 
-  static void ParseSFunctions(SFunctionVisitor &walker, const Stmt *stmt);
-
-  static int LookForArgument(const clang::FunctionDecl *function,
-                             llvm::StringRef argName);
+  static ParamVector ProcessCallExpr(const clang::CallExpr *CE);
 
 private:
   static SFunctionVisitor *Walker;

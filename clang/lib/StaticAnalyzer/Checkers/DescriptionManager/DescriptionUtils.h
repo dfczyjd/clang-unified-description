@@ -7,7 +7,7 @@
 #include "DescriptionManager.h"
 #include <set>
 
-static class DescriptionUtils {
+class DescriptionUtils {
 public:
   static int LookForArgument(const clang::FunctionDecl *function,
                              llvm::StringRef argName);

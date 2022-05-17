@@ -98,7 +98,10 @@ private:
 
 class ParamVector : public llvm::SmallVector<SFParam *> {
 public:
-  void SetSFCallExpr(const clang::CallExpr *CE) { SFCall = CE; }
+  ParamVector(const clang::CallExpr *CE)
+      : llvm::SmallVector<SFParam *>(), SFCall(CE) {}
+
+  const clang::CallExpr *GetSFCallExpr() { return SFCall; }
 
   clang::SourceLocation GetCallLocation() const {
     return SFCall->getExprLoc();
