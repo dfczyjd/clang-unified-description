@@ -296,12 +296,12 @@ private:
   CallDescriptionMap<CheckFn> AllocatingMemFnMap{
       {{"alloca", 1}, &MallocChecker::checkAlloca},
       {{"_alloca", 1}, &MallocChecker::checkAlloca},
-      {{"malloc", 1}, &MallocChecker::checkBasicAlloc},
+      //{{"malloc", 1}, &MallocChecker::checkBasicAlloc},
       {{"malloc", 3}, &MallocChecker::checkKernelMalloc},
       {{"calloc", 2}, &MallocChecker::checkCalloc},
       {{"valloc", 1}, &MallocChecker::checkBasicAlloc},
       {{CDF_MaybeBuiltin, "strndup", 2}, &MallocChecker::checkStrdup},
-      {{CDF_MaybeBuiltin, "strdup", 1}, &MallocChecker::checkStrdup},
+      //{{CDF_MaybeBuiltin, "strdup", 1}, &MallocChecker::checkStrdup},
       {{"_strdup", 1}, &MallocChecker::checkStrdup},
       {{"kmalloc", 2}, &MallocChecker::checkKernelMalloc},
       {{"if_nameindex", 1}, &MallocChecker::checkIfNameIndex},
@@ -952,13 +952,13 @@ static bool isStandardNewDelete(const FunctionDecl *FD) {
 }
 
 ProgramStateRef setRegionAllocated(ProgramStateRef state,
-                                          SymbolRef region, AllocationFamily family, const Expr *E) {
-  return state->set<RegionState>(region, RefState::getAllocated(family, E));
+                                          SymbolRef region, AllocationFamily family, const Stmt *S) {
+  return state->set<RegionState>(region, RefState::getAllocated(family, S));
 }
 
 ProgramStateRef setRegionZeroAllocated(ProgramStateRef state, SymbolRef region,
-                                       AllocationFamily family, const Expr *E) {
-  RefState RS = RefState::getAllocated(family, E);
+                                       AllocationFamily family, const Stmt *S) {
+  RefState RS = RefState::getAllocated(family, S);
   return state->set<RegionState>(region, RefState::getAllocatedOfSizeZero(&RS));
 }
 

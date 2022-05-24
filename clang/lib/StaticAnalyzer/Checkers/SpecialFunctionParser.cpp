@@ -24,7 +24,6 @@ private:
 #define SF_PROCESSOR(NAME)                                                     \
   void NAME##_process(const CallEvent &Call, CheckerContext &Ctx) const;
 
-  SF_PROCESSOR(sf_buffer_size)
   SF_PROCESSOR(sf_allocate_with_size)
 
   using SFProcessFn = std::function<void(
@@ -91,75 +90,22 @@ void SpecialFunctionParser::sf_allocate_with_size_process(
     ProgramStateRef zeroState, nonZeroState;
     std::tie(zeroState, nonZeroState) = State->assume(sizeCmp.castAs<DefinedOrUnknownSVal>());
     
+    auto allocCallExpr = Call.getCalleeStackFrame(Count)
+                             ->getParent()
+                             ->getStackFrame()
+                             ->getCallSite();
     if (zeroState && !nonZeroState)
       State = setRegionZeroAllocated(State, arrayWithSize.getAsSymbol(),
-                                     allocFamily, CE);
+                                     allocFamily, allocCallExpr);
     else
       State = setRegionAllocated(State, arrayWithSize.getAsSymbol(),
-                                 allocFamily, CE);
+                                 allocFamily, allocCallExpr);
     Ctx.addTransition(State);
   } else {
     DescriptionUtils::EmitBugReport(
         Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
         getCheckerName(), params[1]->GetItemLocation(),
         "Expected a SF_AllocationFamily enum here");
-  }
-}
-
-void SpecialFunctionParser::sf_buffer_size_process(const CallEvent &Call,
-                                                   CheckerContext &Ctx) const {
-  const CallExpr *CE;
-  if (!(CE = dyn_cast<CallExpr>(Call.getOriginExpr())))
-    return;
-  ParamVector params = DescriptionManager::ProcessCallExpr(CE);
-  if (params.size() != 2) {
-    DescriptionUtils::EmitBugReport(
-        Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
-        getCheckerName(), params.GetCallLocation(),
-        "This function should have exactly 2 arguments");
-    return;
-  }
-  if (auto var_arg = dyn_cast<VariableParam>(params[0])) {
-    auto var = var_arg->GetExpr();
-    if (!var->getType()->isPointerType()) {
-      DescriptionUtils::EmitBugReport(
-          Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
-          getCheckerName(), var_arg, "Expected a pointer here");
-      return;
-    }
-
-    if (params[1]->GetExpr()->getType().getTypePtr()->isIntegerType()) {
-      unsigned Count = Ctx.blockCount();
-      auto State = Ctx.getState();
-      auto LCtx = Ctx.getLocationContext();
-      SVal Size = State->getSVal(Call.getArgExpr(0), LCtx);
-      auto &svalBuilder = Ctx.getSValBuilder();
-      auto arrayWithSize =
-          svalBuilder.getConjuredHeapSymbolVal(CE, LCtx, Count)
-              .castAs<DefinedSVal>();
-      /*retValue = arrayWithSize;
-      llvm::errs() << "CallExpr:\n";
-      CE->dumpColor();
-      llvm::errs() << "Argument:\n";
-      Call.getArgExpr(0)->dumpColor();*/
-      State = State->BindExpr(CE, Ctx.getLocationContext(),
-                              arrayWithSize);
-      State =
-          setDynamicExtent(State, arrayWithSize.getAsRegion(),
-                            Size.castAs<DefinedOrUnknownSVal>(), svalBuilder);
-      Ctx.addTransition(State);
-    } else {
-      DescriptionUtils::EmitBugReport(
-          Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
-          getCheckerName(), params[1],
-          "Expected an expression of integer type here");
-      return;
-    }
-  } else {
-    DescriptionUtils::EmitBugReport(
-        Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
-        getCheckerName(), params[0], "Expected a variable here");
-    return;
   }
 }
 

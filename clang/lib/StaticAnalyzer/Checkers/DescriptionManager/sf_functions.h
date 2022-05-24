@@ -24,5 +24,17 @@ void sf_propagation_return() {}
 // source or desctination (depending on enum value given) for GenericTaintChecker
 void sf_propagation_variadic(SF_TaintCheckerVarType type, int index) {}
 
-// Sets buffer size for the given array
-void sf_buffer_size(void* array, size_t size) {}
+// Enum for setting AllocationFamily parameters for MallocChecker
+enum class SF_AllocationFamily {
+  AF_None,
+  AF_Malloc,
+  AF_CXXNew,
+  AF_CXXNewArray,
+  AF_IfNameIndex,
+  AF_Alloca,
+  AF_InnerBuffer
+};
+
+// Marks that the function allocates memory block of given size.
+// The pointer to the allocated block is the return value
+void* sf_allocate_with_size(size_t size, SF_AllocationFamily) { return nullptr; }

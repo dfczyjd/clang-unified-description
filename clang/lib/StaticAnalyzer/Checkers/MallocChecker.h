@@ -110,9 +110,9 @@ public:
 } // end of anonymous namespace
 
 ProgramStateRef setRegionZeroAllocated(ProgramStateRef state, SymbolRef region,
-                                       AllocationFamily family, const Expr *E);
+                                       AllocationFamily family, const Stmt *S);
 
 ProgramStateRef setRegionAllocated(ProgramStateRef state,
-                                          SymbolRef region, AllocationFamily family, const Expr* E);
+                                          SymbolRef region, AllocationFamily family, const Stmt* S);
 
 #endif
