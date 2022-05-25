@@ -64,10 +64,19 @@ void *malloc(size_t size)
   return ptr;
 }
 
-char *strdup(char *s)
+char *strdup(const char *s)
 {
   char* result;
   int size = strlen(s);
   result = (char*)sf_allocate_with_size(size, AF_Malloc);
   return result;
 }
+
+void *av_malloc(size_t size)
+{
+  void* ptr;
+  ptr = sf_allocate_with_size(size, AF_Malloc);
+  return ptr;
+}
+
+#define av_free free
