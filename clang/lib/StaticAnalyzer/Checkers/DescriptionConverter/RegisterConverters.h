@@ -3,6 +3,6 @@
 
 #include "DescriptionConverter.h"
 
-void RegisterConverters(std::vector<DescriptionConverter *> &Converters);
+void registerConverters(std::vector<DescriptionConverter *> &Converters);
 
 #endif // LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_REGISTERCONVERTERS_H

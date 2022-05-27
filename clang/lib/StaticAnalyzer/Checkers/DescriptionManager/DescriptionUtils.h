@@ -9,24 +9,24 @@
 
 class DescriptionUtils {
 public:
-  static int LookForArgument(const clang::FunctionDecl *function,
+  static int lookForArgument(const clang::FunctionDecl *function,
                              llvm::StringRef argName);
 
   static llvm::SmallVector<unsigned>
-  FindParameters(clang::ento::BugReporter &BR,
+  findParameters(clang::ento::BugReporter &BR,
                  clang::AnalysisDeclContext *currentADC,
                  const clang::FunctionDecl *currentFunction, ParamVector params,
                  CheckerNameRef checkerName);
 
-  static bool IsParsedBy(const CheckerBase *C,
+  static bool isParsedBy(const CheckerBase *C,
                          const clang::FunctionDecl *function);
-  static void MarkAsParsedBy(const CheckerBase *C,
+  static void markAsParsedBy(const CheckerBase *C,
                              const clang::FunctionDecl *function);
-  static void EmitBugReport(clang::ento::BugReporter &BR,
+  static void emitBugReport(clang::ento::BugReporter &BR,
                             clang::AnalysisDeclContext *ADC,
                             clang::ento::CheckerNameRef checkerName,
                             SFParam *paramWithIssue, llvm::StringRef bugStr);
-  static void EmitBugReport(clang::ento::BugReporter &BR,
+  static void emitBugReport(clang::ento::BugReporter &BR,
                             clang::AnalysisDeclContext *ADC,
                             clang::ento::CheckerNameRef checkerName,
                             clang::SourceLocation callWithIssue,

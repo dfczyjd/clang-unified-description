@@ -3,32 +3,32 @@
 #include "TaintCheckerDescriptionConverter.h"
 #include "llvm/Support/FormatVariadic.h"
 
-ArgVector TaintCheckerDescriptionConverter::ConvertArgList(const FunctionDecl *currentFunction,
+ArgVector TaintCheckerDescriptionConverter::convertArgList(const FunctionDecl *currentFunction,
     const CallExpr *ce) {
   ArgVector args;
   for (auto it = ce->arg_begin(), end = ce->arg_end(); it != end; ++it) {
-    if (auto arg = UnwrapVariable(*it)) {
+    if (auto arg = unwrapVariable(*it)) {
       auto argName = arg->getDecl()->getName();
-      int argIndex = LookForArgument(currentFunction, argName);
+      int argIndex = lookForArgument(currentFunction, argName);
       if (argIndex == -1) {
         auto error = llvm::formatv("{0} is not an argument of {1}", argName,
                                    currentFunction->getName())
                          .str();
         auto argLocation = (*it)->getExprLoc();
-        GenerateError("TaintCheckerConverter", error.c_str(), argLocation);
+        generateError("TaintCheckerConverter", error.c_str(), argLocation);
       } else {
         args.push_back(argIndex);
       }
     } else {
       auto argLocation = (*it)->getExprLoc();
-      GenerateError("TaintCheckerConverter", "Expected a variable here",
+      generateError("TaintCheckerConverter", "Expected a variable here",
                     argLocation);
     }
   }
   return args;
 }
 
-void TaintCheckerDescriptionConverter::SetNameAndScope(
+void TaintCheckerDescriptionConverter::setNameAndScope(
     TaintConfiguration::Propagation &propagation,
     const clang::FunctionDecl *function) {
   auto fullName = function->getQualifiedNameAsString();
@@ -43,12 +43,12 @@ void TaintCheckerDescriptionConverter::SetNameAndScope(
   }
 }
 
-void TaintCheckerDescriptionConverter::ProcessFunction(
+void TaintCheckerDescriptionConverter::processFunction(
     const clang::CallExpr *ce, AnalysisDeclContext *ADC) {
   auto function = ce->getCalleeDecl()->getAsFunction();
   if (function->getName() == "sf_propagation_src") {
     auto currentFunc = ADC->getDecl()->getAsFunction();
-    ArgVector srcArgs = ConvertArgList(currentFunc, ce);
+    ArgVector srcArgs = convertArgList(currentFunc, ce);
     for (auto prop : Config.Propagations) {
       if (prop.Name == currentFunc->getName()) {
         prop.SrcArgs.insert(prop.SrcArgs.end(), srcArgs.begin(), srcArgs.end());
@@ -56,7 +56,7 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       }
     }
     TaintConfiguration::Propagation prop;
-    SetNameAndScope(prop, currentFunc);
+    setNameAndScope(prop, currentFunc);
     prop.SrcArgs = srcArgs;
     prop.VarType = VariadicType::None;
     prop.VarIndex = InvalidArgIndex;
@@ -64,7 +64,7 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
   } else if (function->getName() == "sf_propagation_dst") {
     auto currentFunc = ADC->getDecl()->getAsFunction();
     SignedArgVector dstArgs;
-    ArgVector args = ConvertArgList(currentFunc, ce);
+    ArgVector args = convertArgList(currentFunc, ce);
     dstArgs.append(args.begin(), args.end());
     for (auto& prop : Config.Propagations) {
       if (prop.Name == currentFunc->getName()) {
@@ -73,7 +73,7 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       }
     }
     TaintConfiguration::Propagation prop;
-    SetNameAndScope(prop, currentFunc);
+    setNameAndScope(prop, currentFunc);
     prop.DstArgs = dstArgs;
     prop.VarType = VariadicType::None;
     prop.VarIndex = InvalidArgIndex;
@@ -87,7 +87,7 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       }
     }
     TaintConfiguration::Propagation prop;
-    SetNameAndScope(prop, currentFunc);
+    setNameAndScope(prop, currentFunc);
     prop.DstArgs = {-1};
     prop.VarType = VariadicType::None;
     prop.VarIndex = InvalidArgIndex;
@@ -95,13 +95,13 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
   } else if (function->getName() == "sf_propagation_variadic") {
     auto currentFunc = ADC->getDecl()->getAsFunction();
     if (!currentFunc->isVariadic()) {
-      GenerateError(
+      generateError(
           "TaintCheckerConverter",
           "This special function should be used only in variadic functions",
           ce->getExprLoc());
     }
     if (ce->getNumArgs() != 2) {
-      GenerateError(
+      generateError(
           "TaintCheckerConverter",
           "This function should have exactly 2 arguments",
           ce->getExprLoc());
@@ -113,12 +113,12 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       if (auto value = dyn_cast<EnumConstantDecl>(typeArg->getDecl())) {
         varType = VariadicType(value->getInitVal().getZExtValue());
       } else {
-        GenerateError("TaintCheckerConverter", "Enum expected here",
+        generateError("TaintCheckerConverter", "Enum expected here",
                       typeArg->getExprLoc());
         return;
       }
     } else {
-      GenerateError("TaintCheckerConverter", "Enum expected here",
+      generateError("TaintCheckerConverter", "Enum expected here",
                     ce->getArg(0)->getExprLoc());
       return;
     }
@@ -127,7 +127,7 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       auto value = indexArg->getValue().getZExtValue();
       if (value < std::numeric_limits<unsigned>::lowest() ||
           value > std::numeric_limits<unsigned>::max()) {
-        GenerateError(
+        generateError(
             "TaintCheckerConverter",
             llvm::formatv("The value should be within range [{0}, {1}]",
                           std::numeric_limits<unsigned>::lowest(),
@@ -139,7 +139,7 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       }
       varIndex = (unsigned)value;
     } else {
-      GenerateError("TaintCheckerConverter", "Integer expected here",
+      generateError("TaintCheckerConverter", "Integer expected here",
                     ce->getArg(1)->getExprLoc());
       return;
     }
@@ -152,26 +152,26 @@ void TaintCheckerDescriptionConverter::ProcessFunction(
       }
     }
     TaintConfiguration::Propagation prop;
-    SetNameAndScope(prop, currentFunc);
+    setNameAndScope(prop, currentFunc);
     prop.VarType = varType;
     prop.VarIndex = varIndex;
     Config.Propagations.push_back(prop);
   } else if (function->getName() == "sf_sink") {
     auto currentFunc = ADC->getDecl()->getAsFunction();
-    ArgVector sinkArgs = ConvertArgList(currentFunc, ce);
+    ArgVector sinkArgs = convertArgList(currentFunc, ce);
     TaintConfiguration::NameScopeArgs sink(
         {currentFunc->getName().str(), "", sinkArgs});
     Config.Sinks.push_back(sink);
   } else if (function->getName() == "sf_filter") {
     auto currentFunc = ADC->getDecl()->getAsFunction();
-    ArgVector filterArgs = ConvertArgList(currentFunc, ce);
+    ArgVector filterArgs = convertArgList(currentFunc, ce);
     TaintConfiguration::NameScopeArgs filter(
         {currentFunc->getName().str(), "", filterArgs});
     Config.Filters.push_back(filter);
   }
 }
 
-std::string TaintCheckerDescriptionConverter::OutputConfiguration() const {
+std::string TaintCheckerDescriptionConverter::outputConfiguration() const {
   std::error_code error;
   std::string configFilename;
   if (ConfigDirectory.empty())
@@ -179,6 +179,11 @@ std::string TaintCheckerDescriptionConverter::OutputConfiguration() const {
   else
     configFilename = (ConfigDirectory + "/" + CONFIG_FILE).str();
   llvm::raw_fd_ostream fout(configFilename, error);
+  if (error) {
+    llvm::errs() << "Error: could not create file " << configFilename
+                 << '\n';
+    return "";
+  }
   llvm::yaml::Output out(fout);
   TaintConfiguration outConfig = Config;
   out << outConfig;

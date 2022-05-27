@@ -7,7 +7,7 @@
 class DescriptionManager {
 
 public:
-  static void AddSFunction(llvm::StringRef SFName) {
+  static void addSFunction(llvm::StringRef SFName) {
     RegisteredFunctions.insert(SFName);
   }
 
@@ -17,16 +17,16 @@ public:
   /// <param name="SFName">The name of the description function</param>
   /// <param name="Function">The function to look in</param>
   /// <returns>List of parameters of found description function</returns>
-  static llvm::SmallVector<ParamVector> GetParams(llvm::StringRef SFName,
+  static llvm::SmallVector<ParamVector> getParams(llvm::StringRef SFName,
                                                   const FunctionDecl *Function);
 
-  static void SetWalker(SFunctionVisitor *Walker);
+  static void setWalker(SFunctionVisitor *Walker);
 
-  static llvm::StringSet<> &GetRegisteredFunctions() {
+  static llvm::StringSet<> &getRegisteredFunctions() {
     return RegisteredFunctions;
   }
 
-  static ParamVector ProcessCallExpr(const clang::CallExpr *CE);
+  static ParamVector processCallExpr(const clang::CallExpr *CE);
 
 private:
   static SFunctionVisitor *Walker;

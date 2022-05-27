@@ -12,7 +12,7 @@ namespace {
 class ConvertDescriptionChecker : public Checker<check::ASTCodeBody, check::EndAnalysis> {
 public:
   ConvertDescriptionChecker() {
-    RegisterConverters(Converters);
+    registerConverters(Converters);
   }
 
   void checkASTCodeBody(const Decl *D, AnalysisManager &Mgr,

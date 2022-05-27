@@ -551,12 +551,12 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
 
 void GenericTaintChecker::registerSFs() const {
   DescriptionManager mgr;
-  mgr.AddSFunction("sf_sink");
-  mgr.AddSFunction("sf_filter");
-  mgr.AddSFunction("sf_propagation_src");
-  mgr.AddSFunction("sf_propagation_dst");
-  mgr.AddSFunction("sf_propagation_return");
-  mgr.AddSFunction("sf_propagation_variadic");
+  mgr.addSFunction("sf_sink");
+  mgr.addSFunction("sf_filter");
+  mgr.addSFunction("sf_propagation_src");
+  mgr.addSFunction("sf_propagation_dst");
+  mgr.addSFunction("sf_propagation_return");
+  mgr.addSFunction("sf_propagation_variadic");
 }
 
 GenericTaintChecker::TaintPropagationRule &
@@ -574,14 +574,14 @@ GenericTaintChecker::getOrEmplaceCustomPropagation(std::string funcName, std::st
 void GenericTaintChecker::parseFunctionConfig(
     CheckerContext &Ctx, const AnalysisDeclContext *calleeADC) const {
   auto currentFunction = calleeADC->getDecl()->getAsFunction();
-  if (!DescriptionUtils::IsParsedBy(this, currentFunction)) {
-    DescriptionUtils::MarkAsParsedBy(this, currentFunction);
+  if (!DescriptionUtils::isParsedBy(this, currentFunction)) {
+    DescriptionUtils::markAsParsedBy(this, currentFunction);
 
     auto currentADC =
         Ctx.getAnalysisManager().getAnalysisDeclContext(currentFunction);
     auto &bugReporter = Ctx.getBugReporter();
     SFunctionVisitor walker(bugReporter, currentADC, this);
-    DescriptionManager::SetWalker(&walker);
+    DescriptionManager::setWalker(&walker);
 
     auto functionFullName = currentFunction->getQualifiedNameAsString();
     auto scopeAndName = StringRef(functionFullName).rsplit("::");
@@ -593,21 +593,21 @@ void GenericTaintChecker::parseFunctionConfig(
     }
 
     for (auto params :
-         DescriptionManager::GetParams("sf_sink", currentFunction)) {
-      auto args = DescriptionUtils::FindParameters(
+         DescriptionManager::getParams("sf_sink", currentFunction)) {
+      auto args = DescriptionUtils::findParameters(
           bugReporter, currentADC, currentFunction,
                                        params, getCheckerName());
       CustomSinks.emplace(functionName, std::make_pair(functionScope, args));
     }
     for (auto params :
-         DescriptionManager::GetParams("sf_filter", currentFunction)) {
-      auto args = DescriptionUtils::FindParameters(
+         DescriptionManager::getParams("sf_filter", currentFunction)) {
+      auto args = DescriptionUtils::findParameters(
           bugReporter, currentADC, currentFunction, params, getCheckerName());
       CustomFilters.emplace(functionName, std::make_pair(functionScope, args));
     }
     for (auto params :
-         DescriptionManager::GetParams("sf_propagation_src", currentFunction)) {
-      auto args = DescriptionUtils::FindParameters(
+         DescriptionManager::getParams("sf_propagation_src", currentFunction)) {
+      auto args = DescriptionUtils::findParameters(
           bugReporter, currentADC, currentFunction, params, getCheckerName());
       auto &rule = getOrEmplaceCustomPropagation(functionName.str(),
                                                  functionScope.str());
@@ -615,29 +615,29 @@ void GenericTaintChecker::parseFunctionConfig(
         rule.addSrcArg(arg);
     }
     for (auto params :
-         DescriptionManager::GetParams("sf_propagation_dst", currentFunction)) {
-      auto args = DescriptionUtils::FindParameters(
+         DescriptionManager::getParams("sf_propagation_dst", currentFunction)) {
+      auto args = DescriptionUtils::findParameters(
           bugReporter, currentADC, currentFunction, params, getCheckerName());
       auto &rule = getOrEmplaceCustomPropagation(functionName.str(),
                                                  functionScope.str());
       for (auto arg : args)
         rule.addDstArg(arg);
     }
-    for (auto params : DescriptionManager::GetParams("sf_propagation_return",
+    for (auto params : DescriptionManager::getParams("sf_propagation_return",
                                                      currentFunction)) {
       auto &rule = getOrEmplaceCustomPropagation(functionName.str(),
                                                  functionScope.str());
       rule.addDstArg(ReturnValueIndex);
     }
-    for (auto params : DescriptionManager::GetParams("sf_propagation_variadic",
+    for (auto params : DescriptionManager::getParams("sf_propagation_variadic",
                                                      currentFunction)) {
       if (!currentFunction->isVariadic())
-        DescriptionUtils::EmitBugReport(
-            bugReporter, currentADC, getCheckerName(), params.GetCallLocation(),
+        DescriptionUtils::emitBugReport(
+            bugReporter, currentADC, getCheckerName(), params.getCallLocation(),
             "This special function should be used only in variadic functions");
       if (params.size() != 2) {
-        DescriptionUtils::EmitBugReport(
-            bugReporter, currentADC, getCheckerName(), params.GetCallLocation(),
+        DescriptionUtils::emitBugReport(
+            bugReporter, currentADC, getCheckerName(), params.getCallLocation(),
             "This function should have exactly 2 arguments");
         continue;
       }
@@ -646,19 +646,19 @@ void GenericTaintChecker::parseFunctionConfig(
       VariadicType varType;
       unsigned varIndex;
       if (auto typeArg = dyn_cast<EnumParam>(params[0])) {
-        auto value = typeArg->GetValue().getZExtValue();
+        auto value = typeArg->getValue().getZExtValue();
         varType = VariadicType(value);
       } else {
-        DescriptionUtils::EmitBugReport(
+        DescriptionUtils::emitBugReport(
             bugReporter, currentADC, getCheckerName(), params[0],
             "Expected a SF_TaintCheckerVarType enum here");
         continue;
       }
       if (auto indexArg = dyn_cast<IntegerParam>(params[1])) {
-        auto value = indexArg->GetValue().getZExtValue();
+        auto value = indexArg->getValue().getZExtValue();
         if (value < std::numeric_limits<unsigned>::lowest() ||
             value > std::numeric_limits<unsigned>::max()) {
-          DescriptionUtils::EmitBugReport(
+          DescriptionUtils::emitBugReport(
               bugReporter, currentADC, getCheckerName(), params[0],
               llvm::formatv("The value should be within range [{0}, {1}]",
                             std::numeric_limits<unsigned>::lowest(),
@@ -667,7 +667,7 @@ void GenericTaintChecker::parseFunctionConfig(
         }
         varIndex = (unsigned)(value);
       } else {
-        DescriptionUtils::EmitBugReport(bugReporter, currentADC,
+        DescriptionUtils::emitBugReport(bugReporter, currentADC,
                                         getCheckerName(), params[0],
                                         "Expected an integer here");
         continue;

@@ -84,19 +84,19 @@ template <> struct MappingTraits<TaintConfiguration::NameScopeArgs> {
 
 class TaintCheckerDescriptionConverter : public DescriptionConverter {
 public:
-  void ProcessFunction(const CallExpr *ce, AnalysisDeclContext *ADC) override;
+  void processFunction(const CallExpr *ce, AnalysisDeclContext *ADC) override;
 
-  std::string OutputConfiguration() const override;
+  std::string outputConfiguration() const override;
 
   TaintConfiguration Config;
 
 private:
-  ArgVector ConvertArgList(const FunctionDecl *currentFunction,
+  ArgVector convertArgList(const FunctionDecl *currentFunction,
                            const CallExpr *ce);
-  void SetNameAndScope(TaintConfiguration::Propagation &propagation,
+  void setNameAndScope(TaintConfiguration::Propagation &propagation,
                        const clang::FunctionDecl *function);
 
-  const llvm::StringRef CONFIG_FILE = "config.yaml";
+  const llvm::StringRef CONFIG_FILE = "TaintCheckerConfig.yaml";
 };
 
 #endif // LLVM_CLANG_LIB_STATICANALYZER_CHECKER_DESCRIPTIONCONVERTER_TAINTCHECKERCONVERTER_H

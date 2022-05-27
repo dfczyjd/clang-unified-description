@@ -18,12 +18,12 @@ void SFunctionVisitor::VisitStmt(const Stmt *S) { VisitChildren(S); }
 
 void SFunctionVisitor::VisitCallExpr(const CallExpr *ce) {
   auto funcName = ce->getCalleeDecl()->getAsFunction()->getName();
-  auto funcs = DescriptionManager::GetRegisteredFunctions();
+  auto funcs = DescriptionManager::getRegisteredFunctions();
   for (auto it = funcs.begin(), end = funcs.end(); it != end; ++it) {
     auto func = it->getKey();
     if (funcName == func) {
       auto res = FoundSFs.try_emplace(func);
-      res.first->getValue().push_back(DescriptionManager::ProcessCallExpr(ce));
+      res.first->getValue().push_back(DescriptionManager::processCallExpr(ce));
     }
   }
 

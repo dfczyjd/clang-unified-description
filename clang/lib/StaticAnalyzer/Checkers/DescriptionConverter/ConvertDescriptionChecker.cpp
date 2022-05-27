@@ -31,7 +31,7 @@ void ConvertDescriptionChecker::checkASTCodeBody(const Decl *D,
   ConvertDescriptionVisitor walker(
       BR, Mgr.getAnalysisDeclContextManager().getContext(D), this, Converters);
   for (auto conv : Converters) {
-    conv->SetWalker(&walker);
+    conv->setWalker(&walker);
     conv->ConfigDirectory = ConfigDirectory;
   }
   walker.Visit(D->getBody());
@@ -40,9 +40,13 @@ void ConvertDescriptionChecker::checkASTCodeBody(const Decl *D,
 void ConvertDescriptionChecker::checkEndAnalysis(ExplodedGraph &G,
                                                  BugReporter &BR,
                                                  ExprEngine &Eng) const {
+  static bool hasParsed = false;
+  if (hasParsed)
+    return;
+  hasParsed = true;
   std::string config;
   for (auto conv : Converters) {
-    auto convConfig = conv->OutputConfiguration();
+    auto convConfig = conv->outputConfiguration();
     if (convConfig.empty())
       continue;
     config = Twine(config).concat(convConfig).str();
@@ -65,7 +69,7 @@ void ConvertDescriptionVisitor::VisitStmt(const Stmt *S) { VisitChildren(S); }
 
 void ConvertDescriptionVisitor::VisitCallExpr(const CallExpr *ce) {
   for (auto conv : Converters) {
-    conv->ProcessFunction(ce, ADC);
+    conv->processFunction(ce, ADC);
   }
 
   VisitChildren(ce);

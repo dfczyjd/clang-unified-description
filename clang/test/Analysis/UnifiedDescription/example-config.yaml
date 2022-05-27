@@ -1,0 +1,24 @@
+---
+Propagations:
+  - Name:            returnTaint
+    Scope:           ''
+    SrcArgs:         [ 0 ]
+    DstArgs:         [ 1 ]
+  - Name:            produce
+    Scope:           ''
+    DstArgs:         [ -1 ]
+  - Name:            varargs_propagation
+    Scope:           'nmsp::inner'
+    SrcArgs:         [ 0 ]
+    DstArgs:         [ -1 ]
+    VariadicType:    Src
+    VariadicIndex:   3
+Filters:
+  - Name:            filter
+    Scope:           ''
+    Args:            [ 0 ]
+Sinks:
+  - Name:            consume
+    Scope:           ''
+    Args:            [ 0, 1 ]
+...

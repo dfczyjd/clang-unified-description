@@ -5,11 +5,11 @@ llvm::StringSet<> DescriptionManager::RegisteredFunctions;
 std::map<const FunctionDecl *, llvm::StringMap<llvm::SmallVector<ParamVector>>>
     DescriptionManager::SFParams;
 
-void DescriptionManager::SetWalker(SFunctionVisitor *Walker) {
+void DescriptionManager::setWalker(SFunctionVisitor *Walker) {
   DescriptionManager::Walker = Walker;
 }
 
-ParamVector DescriptionManager::ProcessCallExpr(const clang::CallExpr *CE) {
+ParamVector DescriptionManager::processCallExpr(const clang::CallExpr *CE) {
   ParamVector params(CE);
   for (auto param : CE->arguments()) {
     param = param->IgnoreParenCasts();
@@ -29,7 +29,7 @@ ParamVector DescriptionManager::ProcessCallExpr(const clang::CallExpr *CE) {
 }
 
 llvm::SmallVector<ParamVector>
-DescriptionManager::GetParams(llvm::StringRef SFName,
+DescriptionManager::getParams(llvm::StringRef SFName,
                               const FunctionDecl *Function) {
   llvm::StringMap<llvm::SmallVector<ParamVector>> sFunctions;
   if (!Function->hasBody())

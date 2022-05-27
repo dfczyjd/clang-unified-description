@@ -8,24 +8,24 @@ class DescriptionConverter;
 
 class DescriptionConverter {
 public:
-  virtual void ProcessFunction(const clang::CallExpr *ce,
+  virtual void processFunction(const clang::CallExpr *ce,
                                clang::AnalysisDeclContext *ADC) = 0;
 
-  virtual std::string OutputConfiguration() const = 0;
+  virtual std::string outputConfiguration() const = 0;
 
-  void SetWalker(const ConvertDescriptionVisitor* newWalker) { walker = newWalker; }
+  void setWalker(const ConvertDescriptionVisitor* newWalker) { walker = newWalker; }
 
   llvm::StringRef ConfigDirectory;
 
 protected:
   const ConvertDescriptionVisitor *walker;
 
-  int LookForArgument(const clang::FunctionDecl *function,
+  int lookForArgument(const clang::FunctionDecl *function,
                                             llvm::StringRef &argName);
 
-  const clang::DeclRefExpr* UnwrapVariable(const clang::Expr *e) const;
+  const clang::DeclRefExpr* unwrapVariable(const clang::Expr *e) const;
 
-  void GenerateError(const char *converter, const char *message,
+  void generateError(const char *converter, const char *message,
                      llvm::Optional<clang::SourceLocation> location) const;
 };
 

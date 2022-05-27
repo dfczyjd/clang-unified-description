@@ -23,11 +23,11 @@ private:
 public:
   SFParam(const clang::Expr* E = nullptr) : Kind(PK_None), Expression(E) {}
   SFParam(ParamKind kind) : Kind(kind), Expression(nullptr) {}
-  virtual clang::SourceLocation GetItemLocation() const {
+  virtual clang::SourceLocation getItemLocation() const {
     return Expression->getExprLoc();
   }
 
-  virtual const clang::Expr *GetExpr() const { return Expression; }
+  virtual const clang::Expr *getExpr() const { return Expression; }
 
   static bool classof(const SFParam *P) { return P->getKind() == PK_None; }
   virtual ~SFParam() = default;
@@ -39,9 +39,9 @@ public:
   VariableParam(const clang::DeclRefExpr *DE)
       : SFParam(PK_Variable), Expression(DE) {}
 
-  llvm::StringRef GetName() const { return Expression->getDecl()->getName(); }
-  const clang::DeclRefExpr *GetExpr() const override { return Expression; }
-  clang::SourceLocation GetItemLocation() const override {
+  llvm::StringRef getName() const { return Expression->getDecl()->getName(); }
+  const clang::DeclRefExpr *getExpr() const override { return Expression; }
+  clang::SourceLocation getItemLocation() const override {
     return Expression->getExprLoc();
   }
 
@@ -56,8 +56,8 @@ public:
   IntegerParam(const clang::IntegerLiteral *L)
       : SFParam(PK_Integer), Expression(L) {}
 
-  llvm::APInt GetValue() const { return Expression->getValue(); }
-  const clang::IntegerLiteral *GetExpr() const override { return Expression; }
+  llvm::APInt getValue() const { return Expression->getValue(); }
+  const clang::IntegerLiteral *getExpr() const override { return Expression; }
 
   static bool classof(const SFParam *P) { return P->getKind() == PK_Integer; }
 
@@ -70,7 +70,7 @@ public:
   StringParam(const clang::StringLiteral *L)
       : SFParam(PK_String), Expression(L) {}
   
-  llvm::StringRef GetValue() const { return Expression->getString(); }
+  llvm::StringRef getValue() const { return Expression->getString(); }
 
   static bool classof(const SFParam *P) { return P->getKind() == PK_String; }
 
@@ -84,7 +84,7 @@ public:
       : SFParam(PK_Enum), Expression(DE),
         Value(llvm::dyn_cast<clang::EnumConstantDecl>(DE->getDecl())) {}
 
-  llvm::APInt GetValue() const {
+  llvm::APInt getValue() const {
     return Value->getInitVal();
   }
   bool isCorrect() const { return Value != nullptr; }
@@ -101,9 +101,9 @@ public:
   ParamVector(const clang::CallExpr *CE)
       : llvm::SmallVector<SFParam *>(), SFCall(CE) {}
 
-  const clang::CallExpr *GetSFCallExpr() { return SFCall; }
+  const clang::CallExpr *getSFCallExpr() { return SFCall; }
 
-  clang::SourceLocation GetCallLocation() const {
+  clang::SourceLocation getCallLocation() const {
     return SFCall->getExprLoc();
   }
 

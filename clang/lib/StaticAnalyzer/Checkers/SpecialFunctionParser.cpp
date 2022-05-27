@@ -45,16 +45,16 @@ void SpecialFunctionParser::sf_allocate_with_size_process(
   const CallExpr *CE;
   if (!(CE = dyn_cast<CallExpr>(Call.getOriginExpr())))
     return;
-  ParamVector params = DescriptionManager::ProcessCallExpr(CE);
+  ParamVector params = DescriptionManager::processCallExpr(CE);
   if (params.size() != 2) {
-    DescriptionUtils::EmitBugReport(
+    DescriptionUtils::emitBugReport(
         Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
-        getCheckerName(), params.GetCallLocation(),
+        getCheckerName(), params.getCallLocation(),
         "This function should have exactly 2 arguments");
     return;
   }
-  if (!params[0]->GetExpr()->getType().getTypePtr()->isIntegerType()) {
-    DescriptionUtils::EmitBugReport(
+  if (!params[0]->getExpr()->getType().getTypePtr()->isIntegerType()) {
+    DescriptionUtils::emitBugReport(
         Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
         getCheckerName(), params[0],
         "Expected an expression of integer type here");
@@ -63,7 +63,7 @@ void SpecialFunctionParser::sf_allocate_with_size_process(
 
   if (auto allocFamilyArg = dyn_cast<EnumParam>(params[1])) {
     auto allocFamily =
-        AllocationFamily(allocFamilyArg->GetValue().getZExtValue());
+        AllocationFamily(allocFamilyArg->getValue().getZExtValue());
 
     unsigned Count = Ctx.blockCount();
     auto State = Ctx.getState();
@@ -102,9 +102,9 @@ void SpecialFunctionParser::sf_allocate_with_size_process(
                                  allocFamily, allocCallExpr);
     Ctx.addTransition(State);
   } else {
-    DescriptionUtils::EmitBugReport(
+    DescriptionUtils::emitBugReport(
         Ctx.getBugReporter(), Ctx.getCurrentAnalysisDeclContext(),
-        getCheckerName(), params[1]->GetItemLocation(),
+        getCheckerName(), params[1]->getItemLocation(),
         "Expected a SF_AllocationFamily enum here");
   }
 }
