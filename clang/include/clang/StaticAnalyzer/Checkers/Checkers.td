@@ -297,6 +297,11 @@ def C11LockChecker : Checker<"C11Lock">,
   HelpText<"Simple lock -> unlock checker">,
   Dependencies<[PthreadLockBase]>,
   Documentation<HasAlphaDocumentation>;
+  
+def SpecialFunctionParser : Checker<"SpecialFunctionParser">,
+  HelpText<"Parser for special functions">,
+  Documentation<NotDocumented>,
+  Hidden;
 
 def ConvertDescriptionChecker : Checker<"ConvertDescription">,
   HelpText<"Function description converter">,
@@ -525,7 +530,7 @@ def MallocSizeofChecker : Checker<"MallocSizeof">,
 
 def MismatchedDeallocatorChecker : Checker<"MismatchedDeallocator">,
   HelpText<"Check for mismatched deallocators.">,
-  Dependencies<[DynamicMemoryModeling]>,
+  Dependencies<[DynamicMemoryModeling, SpecialFunctionParser]>,
   Documentation<HasDocumentation>;
 
 def VforkChecker : Checker<"Vfork">,
@@ -979,6 +984,7 @@ def ArrayBoundChecker : Checker<"ArrayBound">,
 
 def ArrayBoundCheckerV2 : Checker<"ArrayBoundV2">,
   HelpText<"Warn about buffer overflows (newer checker)">,
+  Dependencies<[SpecialFunctionParser]>,
   Documentation<HasAlphaDocumentation>;
 
 def ReturnPointerRangeChecker : Checker<"ReturnPtrRange">,

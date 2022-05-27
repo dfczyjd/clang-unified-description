@@ -4,6 +4,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_clang_library(clangStaticAnalyzerCheckers
+  SpecialFunctionParser.cpp
   AnalysisOrderChecker.cpp
   AnalyzerStatsChecker.cpp
   ArrayBoundChecker.cpp
@@ -39,6 +40,9 @@ add_clang_library(clangStaticAnalyzerCheckers
   DescriptionConverter/DescriptionConverter.cpp
   DescriptionConverter/RegisterConverters.cpp
   DescriptionConverter/DescriptionConverters/TaintCheckerDescriptionConverter.cpp
+  DescriptionManager/DescriptionManager.cpp
+  DescriptionManager/DescriptionUtils.cpp
+  DescriptionManager/SFunctionVisitor.cpp
   DirectIvarAssignment.cpp
   DivZeroChecker.cpp
   DynamicTypePropagation.cpp
